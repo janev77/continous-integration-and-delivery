@@ -1,0 +1,21 @@
+stages:
+  - build
+
+build-docker-image:
+  stage: build
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
+    IMAGE_NAME: "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA"
+  before_script:
+    - echo "Logging in to Docker registry..."
+    - echo "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" --password-stdin
+  script:
+    - echo "Building Docker image..."
+    - docker build -t "$IMAGE_NAME" .
+    - docker push "$IMAGE_NAME"
+    - echo "Build and push complete: $IMAGE_NAME"
+  after_script:
+    - docker logout "$CI_REGISTRY"
